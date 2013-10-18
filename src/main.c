@@ -1,4 +1,14 @@
-
+/*
+  Author: Derek Gordon
+  Date: October 1, 2013
+  Purpose:
+  Given a Properly Formatted Dataset of Movie Ratings, This program
+  will read in the movie ratings from files into two datasets, a test
+  and training set.  The training set is used to teach the system by
+  calculating movie ratings against the training and correct itself
+  in the linear algebra cases or in the standard elementary cases it
+  calculates a mean from the training set to test against the testing dataset.
+*/
 //Libraries
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,19 +43,19 @@ bool IsWhiteSpace(/* in */char c); //character to be tested
 
 //calculates the Global Mean of all the ratings in the base set and tests
 // them against the test set and calculates the root mean squared error
-void GlobalMeanValue(/* in */ const MovieRating * base,
+float GlobalMeanValue(/* in */ const MovieRating * base,
                      /* in */ const MovieRating * test);
 
 //calculates the mean rating for a given user from the base set,
 // does this for every user in the test set to populate a comparison vector,
 // test the comparison vector against the test set to calculate the root mean squared error
-void UserMeanValue(/* in */const MovieRating * base,
+float UserMeanValue(/* in */const MovieRating * base,
                    /* in */const MovieRating * test);
 
 //calculates the mean rating for a given movie from the base set,
 // does this for every movie in the test set to populate a comparison vector,
 // test the comparison vector against the test set to calculate the root mean squared error
-void MovieMeanValue(/* in */const MovieRating * base,
+float MovieMeanValue(/* in */const MovieRating * base,
                    /* in */const MovieRating * test);
 
 float RMSECalc(/* in */ const MovieRating * expected,
@@ -58,53 +68,60 @@ int main(){
   MovieRating base[bs], test[ts];
   char baseName[] = "assets/u1.base";
   char testName[] = "assets/u1.test";
+  float RMSE[5][3];
 
-  printf("******************Loading Dataset 1******************\n");
+  printf("\n******************Loading Dataset 1******************\n");
   if(LoadRatings(baseName, testName, base, test) == 1)
     printf("Loading Dataset 1 has failed, exiting.");
-  GlobalMeanValue(base, test);
-  UserMeanValue(base, test);
-  MovieMeanValue(base, test);
+  RMSE[0][0] = GlobalMeanValue(base, test);
+  RMSE[0][1] = UserMeanValue(base, test);
+  RMSE[0][2] = MovieMeanValue(base, test);
 
   strncpy(baseName, "assets/u2.base", sizeof baseName);
   strncpy(testName, "assets/u2.test", sizeof testName);
 
-  printf("******************Loading Dataset 2******************\n");
+  printf("\n******************Loading Dataset 2******************\n");
   if(LoadRatings(baseName, testName, base, test) == 1)
     printf("Loading Dataset 2 has failed, exiting.");
-  GlobalMeanValue(base, test);
-  UserMeanValue(base, test);
-  MovieMeanValue(base, test);
+  RMSE[1][0] = GlobalMeanValue(base, test);
+  RMSE[1][1] = UserMeanValue(base, test);
+  RMSE[1][2] = MovieMeanValue(base, test);
 
   strncpy(baseName, "assets/u3.base", sizeof baseName);
   strncpy(testName, "assets/u3.test", sizeof testName);
 
-  printf("******************Loading Dataset 3******************\n");
+  printf("\n******************Loading Dataset 3******************\n");
   if(LoadRatings(baseName, testName, base, test) == 1)
     printf("Loading Dataset 3 has failed, exiting.");
-  GlobalMeanValue(base, test);
-  UserMeanValue(base, test);
-  MovieMeanValue(base, test);
+  RMSE[2][0] = GlobalMeanValue(base, test);
+  RMSE[2][1] = UserMeanValue(base, test);
+  RMSE[2][2] = MovieMeanValue(base, test);
 
   strncpy(baseName, "assets/u4.base", sizeof baseName);
   strncpy(testName, "assets/u4.test", sizeof testName);
 
-  printf("******************Loading Dataset 4******************\n");
+  printf("\n******************Loading Dataset 4******************\n");
   if(LoadRatings(baseName, testName, base, test) == 1)
     printf("Loading Dataset 4 has failed, exiting.");
-  GlobalMeanValue(base, test);
-  UserMeanValue(base, test);
-  MovieMeanValue(base, test);
+  RMSE[3][0] = GlobalMeanValue(base, test);
+  RMSE[3][1] = UserMeanValue(base, test);
+  RMSE[3][2] = MovieMeanValue(base, test);
 
   strncpy(baseName, "assets/u5.base", sizeof baseName);
   strncpy(testName, "assets/u5.test", sizeof testName);
 
-  printf("******************Loading Dataset 5******************\n");
+  printf("\n******************Loading Dataset 5******************\n");
   if(LoadRatings(baseName, testName, base, test) == 1)
     printf("Loading Dataset 5 has failed, exiting.");
-  GlobalMeanValue(base, test);
-  UserMeanValue(base, test);
-  MovieMeanValue(base, test);
+  RMSE[4][0] = GlobalMeanValue(base, test);
+  RMSE[4][1] = UserMeanValue(base, test);
+  RMSE[4][2] = MovieMeanValue(base, test);
+
+  //AVERAGES
+  printf("\n******************Averages***************************\n");
+  printf("Global Mean RMSE: %f\n", (RMSE[0][0] + RMSE[1][0] + RMSE[2][0] + RMSE[3][0] + RMSE[4][0])/5);
+  printf("User Mean RMSE: %f\n", (RMSE[0][1] + RMSE[1][1] + RMSE[2][1] + RMSE[3][1] + RMSE[4][1])/5);
+  printf("Movie Mean RMSE: %f\n", (RMSE[0][2] + RMSE[1][2] + RMSE[2][2] + RMSE[3][2] + RMSE[4][2])/5);
 
   return 0;
 }
@@ -156,34 +173,12 @@ int LoadRatings (/* in */ char* baseName,
 
   i=0;
   while ((read = getline(&line, &len, testF)) != -1) {
-    //printf("Retrieved line of length %zu :\n", read);
-    //printf("%s\n", line);
+    //convert line to MovieRating Object
     MovieRating r = StringToRating(line, read);
     test[i] = r;
     i++;
   }
 
-  /*
-  while(fgets(line, sizeof line, baseF) != NULL){
-    //convert line to MovieRating object
-    //place in vector
-    printf("%i\n", sizeof line);
-    MovieRating r = StringToRating(line, sizeof line);
-    base[i] = r;
-    i++;
-  }//end while
-
-  fclose(baseF);
-
-  //process test file, line by line
-  i = 0;
-  while(fgets(line, sizeof line, testF) != NULL){
-    //convert line to MovieRating object
-    //place in vector
-    test[i] = StringToRating(line, sizeof line);
-    i++;
-  }//end while
-*/
   return 0;
 }//end LoadRatings
 
@@ -228,11 +223,11 @@ MovieRating StringToRating(/* in */char * line, ssize_t read){
 //checks given character to see if it is whitespace
 bool IsWhiteSpace(/* in */ char c){
     switch(c){
-    case ' ':
-    case '\t':
-    case '\r':
-    case '\n': return true;
-    default: return false;
+      case ' ':
+      case '\t':
+      case '\r':
+      case '\n': return true;
+      default: return false;
     }//end switch
 }//end IsWhiteSpace
 
@@ -240,29 +235,30 @@ bool IsWhiteSpace(/* in */ char c){
 //Post: The Root Mean Squared Error is calculated for this specific test
 //Purpose: to process the base vector to calculate a global mean movie rating
 // this rating is tested against the test vector to calculate an RMSE.
-void GlobalMeanValue(/* in */const MovieRating * base,
+float GlobalMeanValue(/* in */const MovieRating * base,
                      /* in */const MovieRating * test){
 	int ts = TEST_SIZE;
 	int bs = BASE_SIZE;
-    MovieRating expected[ts];
-    int i;
+  MovieRating expected[ts];
+  int i;
   //add all ratings in base vector together
-    float gMean = 0.0f;
-    for(i = 0; i < bs; i++)
-        gMean = gMean + base[i].rating;
+  float gMean = 0.0f;
+  for(i = 0; i < bs; i++)
+    gMean = gMean + base[i].rating;
 
   //divide by the number of ratings
-    gMean = (float)gMean/bs;
+  gMean = (float)gMean/bs;
 
   //fill the comparison vector with the Global Mean rating
-    for(i = 0; i < ts; i++){
-        expected[i] = test[i];
-        expected[i].rating = gMean;
-    }//end for
+  for(i = 0; i < ts; i++){
+    expected[i] = test[i];
+    expected[i].rating = gMean;
+  }//end for
 
-
+  float result = RMSECalc(expected, test);
     //calculate root mean squared error
-    printf("Global Mean RMSE: %f\n", RMSECalc(expected, test));
+  printf("Global Mean RMSE: %f\n", result);
+  return result;
 }//end GlobalMeanValue
 
 //Pre: vectors are both populated
@@ -270,7 +266,7 @@ void GlobalMeanValue(/* in */const MovieRating * base,
 //Purpose: to process the base vector to calculate a user mean movie rating
 // for every user that has a rating in the test data, this rating is tested 
 // against the test vector to calculate an RMSE.
-void UserMeanValue(/* in */const MovieRating * base,
+float UserMeanValue(/* in */const MovieRating * base,
                    /* in */const MovieRating * test){
   int ts = TEST_SIZE;
   int bs = BASE_SIZE;
@@ -310,8 +306,10 @@ void UserMeanValue(/* in */const MovieRating * base,
     }//end if
   }//end for
 
+  float result = RMSECalc(expected, test);
   //calculate root mean squared error
-  printf("User Mean RMSE: %f\n", RMSECalc(expected, test));  
+  printf("User Mean RMSE: %f\n", result);
+  return result; 
 }
 
 //Pre: vectors are both populated
@@ -319,7 +317,7 @@ void UserMeanValue(/* in */const MovieRating * base,
 //Purpose: to process the base vector to calculate a mean movie rating
 // from the base set for every movie in the test set, this rating is tested
 // against the test vector to calculate an RMSE.
-void MovieMeanValue(/* in */const MovieRating * base,
+float MovieMeanValue(/* in */const MovieRating * base,
                    /* in */const MovieRating * test){
   int ts = TEST_SIZE;
   int bs = BASE_SIZE;
@@ -369,8 +367,10 @@ void MovieMeanValue(/* in */const MovieRating * base,
       expected[i].rating = (float)totalMSum/(float)totalRateNum;
   }//end for
 
+  float result = RMSECalc(expected, test);
   //calculate root mean squared error
-  printf("Movie Mean RMSE: %f\n", RMSECalc(expected, test));
+  printf("Movie Mean RMSE: %f\n", result);
+  return result;
 }//end MovieMeanValue
 
 //Pre: test vector is the test dataset, expected is a copy of test but the
