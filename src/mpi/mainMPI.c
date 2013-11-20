@@ -64,7 +64,7 @@ float RMSECalc(/* in */ const MovieRating * expected,
 
 int main( int argc, char* argv[]){
   int rank, size;
-
+  float n;
   MPI_Init(&argc, &argv); //start mpi
   MPI_Comm_rank(MPI_COMM_WORLD, &rank); //get pid
   MPI_Comm_size(MPI_COMM_WORLD, &size); //number of processes
@@ -75,7 +75,7 @@ int main( int argc, char* argv[]){
   MovieRating base[bs], test[ts];
   char baseName[] = "assets/u1.base";
   char testName[] = "assets/u1.test";
-  float RMSE[5][3];
+  
 
   if(rank == 0)
     printf("\n******************Loading Dataset 1******************\n");
@@ -84,12 +84,18 @@ int main( int argc, char* argv[]){
 
   MPI_Barrier(MPI_COMM_WORLD);
 
-  if(rank == 1)
-    RMSE[0][0] = GlobalMeanValue(base, test);
-  if(rank == 2)
-    RMSE[0][1] = UserMeanValue(base, test);
-  if(rank == 3)
-    RMSE[0][2] = MovieMeanValue(base, test);
+  if(rank == 1){
+    n = GlobalMeanValue(base, test);
+    MPI_Send(&n, 1, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+  }
+  if(rank == 2){
+    n = UserMeanValue(base, test);
+    MPI_Send(&n, 1, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+  }
+  if(rank == 3){
+    n = MovieMeanValue(base, test);
+    MPI_Send(&n, 1, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+  }
 
   MPI_Barrier(MPI_COMM_WORLD);
 
@@ -103,12 +109,18 @@ int main( int argc, char* argv[]){
 
   MPI_Barrier(MPI_COMM_WORLD);
 
-  if(rank == 1)
-    RMSE[1][0] = GlobalMeanValue(base, test);
-  if(rank == 2)
-    RMSE[1][1] = UserMeanValue(base, test);
-  if(rank == 3)
-    RMSE[1][2] = MovieMeanValue(base, test);
+  if(rank == 1){
+    n = GlobalMeanValue(base, test);
+    MPI_Send(&n, 1, MPI_FLOAT, 0, 1, MPI_COMM_WORLD);
+  }
+  if(rank == 2){
+    n = UserMeanValue(base, test);
+    MPI_Send(&n, 1, MPI_FLOAT, 0, 1, MPI_COMM_WORLD);
+  }
+  if(rank == 3){
+    n = MovieMeanValue(base, test);
+    MPI_Send(&n, 1, MPI_FLOAT, 0, 1, MPI_COMM_WORLD);
+  }
 
   MPI_Barrier(MPI_COMM_WORLD);
 
@@ -122,12 +134,18 @@ int main( int argc, char* argv[]){
 
   MPI_Barrier(MPI_COMM_WORLD);
 
-  if(rank == 1)
-    RMSE[2][0] = GlobalMeanValue(base, test);
-  if(rank == 2)
-    RMSE[2][1] = UserMeanValue(base, test);
-  if(rank == 3)
-    RMSE[2][2] = MovieMeanValue(base, test);
+  if(rank == 1){
+    n = GlobalMeanValue(base, test);
+    MPI_Send(&n, 1, MPI_FLOAT, 0, 2, MPI_COMM_WORLD);
+  }
+  if(rank == 2){
+    n = UserMeanValue(base, test);
+    MPI_Send(&n, 1, MPI_FLOAT, 0, 2, MPI_COMM_WORLD);
+  }
+  if(rank == 3){
+    n = MovieMeanValue(base, test);
+    MPI_Send(&n, 1, MPI_FLOAT, 0, 2, MPI_COMM_WORLD);
+  }
 
   MPI_Barrier(MPI_COMM_WORLD);
 
@@ -141,12 +159,18 @@ int main( int argc, char* argv[]){
 
   MPI_Barrier(MPI_COMM_WORLD);
 
-  if(rank == 1)
-    RMSE[3][0] = GlobalMeanValue(base, test);
-  if(rank == 2)
-    RMSE[3][1] = UserMeanValue(base, test);
-  if(rank == 3)
-    RMSE[3][2] = MovieMeanValue(base, test);
+  if(rank == 1){
+    n = GlobalMeanValue(base, test);
+    MPI_Send(&n, 1, MPI_FLOAT, 0, 3, MPI_COMM_WORLD);
+  }
+  if(rank == 2){
+    n = UserMeanValue(base, test);
+    MPI_Send(&n, 1, MPI_FLOAT, 0, 3, MPI_COMM_WORLD);
+  }
+  if(rank == 3){
+    n = MovieMeanValue(base, test);
+    MPI_Send(&n, 1, MPI_FLOAT, 0, 3, MPI_COMM_WORLD);
+  }
 
   MPI_Barrier(MPI_COMM_WORLD);
 
@@ -160,21 +184,41 @@ int main( int argc, char* argv[]){
 
   MPI_Barrier(MPI_COMM_WORLD);
 
-  if(rank == 1)
-    RMSE[4][0] = GlobalMeanValue(base, test);
-  if(rank == 2)
-    RMSE[4][1] = UserMeanValue(base, test);
-  if(rank == 3)
-    RMSE[4][2] = MovieMeanValue(base, test);
+  if(rank == 1){
+    n = GlobalMeanValue(base, test);
+    MPI_Send(&n, 1, MPI_FLOAT, 0, 4, MPI_COMM_WORLD);
+  }
+  if(rank == 2){
+    n = UserMeanValue(base, test);
+    MPI_Send(&n, 1, MPI_FLOAT, 0, 4, MPI_COMM_WORLD);
+  }
+  if(rank == 3){
+    n = MovieMeanValue(base, test);
+    MPI_Send(&n, 1, MPI_FLOAT, 0, 4, MPI_COMM_WORLD);
+  }
 
   MPI_Barrier(MPI_COMM_WORLD);
-    
-  //AVERAGES
-  printf("\n******************Averages***************************\n");
-  printf("Global Mean RMSE: %f\n", (RMSE[0][0] + RMSE[1][0] + RMSE[2][0] + RMSE[3][0] + RMSE[4][0])/5);
-  printf("User Mean RMSE: %f\n", (RMSE[0][1] + RMSE[1][1] + RMSE[2][1] + RMSE[3][1] + RMSE[4][1])/5);
-  printf("Movie Mean RMSE: %f\n", (RMSE[0][2] + RMSE[1][2] + RMSE[2][2] + RMSE[3][2] + RMSE[4][2])/5);
-  
+
+
+  if(rank == 0){
+    float RMSE[5][3];
+    int i;
+    int j;
+    float m;
+
+    for(i = 0; i < 5; i++){
+      for(j = 1; j < 4; j++){
+        MPI_Recv(&RMSE[i][j-1], 1, MPI_FLOAT, j, i, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      }
+    } 
+    //AVERAGES
+    printf("\n******************Averages***************************\n");
+    printf("Global Mean RMSE: %f\n", (RMSE[0][0] + RMSE[1][0] + RMSE[2][0] + RMSE[3][0] + RMSE[4][0])/5);
+    printf("User Mean RMSE: %f\n", (RMSE[0][1] + RMSE[1][1] + RMSE[2][1] + RMSE[3][1] + RMSE[4][1])/5);
+    printf("Movie Mean RMSE: %f\n", (RMSE[0][2] + RMSE[1][2] + RMSE[2][2] + RMSE[3][2] + RMSE[4][2])/5);
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
+
   MPI_Finalize();
   return 0;
 }
