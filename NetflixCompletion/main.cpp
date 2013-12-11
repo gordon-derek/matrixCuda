@@ -23,16 +23,31 @@ const int NUM_USERS = 943;
 const int NUM_MOVIES = 1682;
 const int NUM_FEATURES = 10;
 const int NUM_RATINGS = 100000;
+const int TEST_SIZE = 20000;
+const int NUM_ITERATIONS = 2;
 
 MovieRating StringToRating(/* in */string line);
+
 string itos(/* in */int n);
+
 int strtoi (/* in */const string& str);
-bool IsWhiteSpace(/* in */ char c);void LearnRandom(/* in */ MatrixXf & p, //the user matrix
-				 /* out*/ MatrixXf & q, //the movie matrix
+
+bool IsWhiteSpace(/* in */ char c);
+
+float RandomGuess(/* in */ const MatrixXf & p, //the user matrix
+				 /* out*/ const MatrixXf & q, //the movie matrix
 				 /* in */ const MatrixXf & R);
+
+float RandomInitLearning(/* in */ const MatrixXf & p, //the user matrix
+				 		 /* out*/ const MatrixXf & q, //the movie matrix
+				 		 /* in */ const MatrixXf & R);
+
 void RemoveRow(/* in */ MatrixXf & orig,
 				   /* in */ const int index,
 				   /* in */ const int mSize);
+
+float RMSECalc(/* in */ const MatrixXf & rExpected,
+			   /* in */ const MatrixXf & rTest);
 
 int main(){
 	MatrixXf p(NUM_USERS, NUM_FEATURES);
@@ -43,7 +58,7 @@ int main(){
 	RT.setConstant(-1.f);
 	
 	//load training dataset
-	ifstream base("assets/u.data");
+	ifstream base("assets/u1.base");
 	if(base.fail()){
 		cout << "Unable to open File. Program Terminating..."<<endl;
 		return 1;
@@ -51,29 +66,35 @@ int main(){
 	string line = "";
 	getline(base, line);
 	MovieRating m = StringToRating(line);
-	for(int r = 0; r < (NUM_RATINGS * .8); r++){
-		for(int i = 0; i < NUM_USERS; i++){
-			while(m.uId == i){
-				R(i,(m.mId-1)) = m.rating;
-				getline(base,line);
-				m = StringToRating(line);
-			}//end while
-		}//end for(i)
-	}//end for(r)
 
+	for(int i = 0; i < NUM_USERS; i++){
+		while(m.uId == i){
+			R(i,(m.mId-1)) = m.rating;
+			getline(base,line);
+			m = StringToRating(line);
+		}//end while
+	}//end for(i)
+
+	ifstream test("assets/u1.test");
+	if(base.fail()){
+		cout << "Unable to open File. Program Terminating..." << endl;
+		return 1;
+	}
+
+	getline(test, line);
+	m = StringToRating(line);
 	//load testing dataset
-	for(int r = 0; r < (NUM_RATINGS * .2); r++){
-		for(int i = 0; i < NUM_USERS; i++){
-			while(m.uId == i){
-				RT(i,(m.mId-1)) = m.rating;
-				getline(base,line);
-				m = StringToRating(line);
-			}//end while
-		}//end for(i)
-	}//end for(r)
+	for(int i = 0; i < NUM_USERS; i++){
+		while(m.uId == i){
+			RT(i,(m.mId-1)) = m.rating;
+			getline(test,line);
+			m = StringToRating(line);
+		}//end while
+	}//end for(i)
 
-	float bestRMSE;
-	for(int n = 0; n < 100; n++){
+
+	float bestRMSE[NUM_ITERATIONS];
+	for(int n = 0; n < NUM_ITERATIONS; n++){
 		for(int i = 0; i < q.rows(); i++)
 			for(int j = 0; j < q.cols(); j++)
 				q(i,j) = rand() % 3;
@@ -81,9 +102,10 @@ int main(){
 			for(int j = 0; j < p.cols(); j++)
 				p(i,j) = rand() % 3;
 
-		LearnRandom(p, q, R);
+		bestRMSE[n] = RandomGuess(p, q, RT);
 	}
-	
+	for(int n = 0; n < NUM_ITERATIONS; n++)
+		cout << bestRMSE[n] << endl;
 
 	return 0;
 }
@@ -143,17 +165,19 @@ MovieRating StringToRating(/* in */string line){
     return rating;
 }//end StringToRating
 
-void LearnRandom(/* in */ MatrixXf & p, //the user matrix
-				 /* out*/ MatrixXf & q, //the movie matrix
+float RandomGuess(/* in */ const MatrixXf & p, //the user matrix
+				 /* out*/ const MatrixXf & q, //the movie matrix
 				 /* in */ const MatrixXf & R){ //the training matrix
 
-	MatrixXf RTest(NUM_USERS, NUM_MOVIES);	
+	MatrixXf rTest(NUM_USERS, NUM_MOVIES);	
 	MatrixXf qTemp = q;
 	MatrixXf invResult(NUM_FEATURES, NUM_FEATURES);
+	rTest.setConstant(-1.f);
 
 	int mSize = NUM_MOVIES;
 
 	for(int i = 0; i < NUM_USERS; i++){
+		cout << "On Row " << i << " of " << NUM_USERS - 1 << endl;
 
 		for(int j = NUM_MOVIES-1; j >= 0; j--)
 			if(R(i,j) == -1 && mSize > 1){
@@ -161,23 +185,29 @@ void LearnRandom(/* in */ MatrixXf & p, //the user matrix
 				mSize--;
 			}
 		if(mSize >= 1){
-			RTest.setConstant(-1.f);
 			VectorXf pRow = p.row(i);
 			VectorXf r = (q*pRow)/5;
 			int index = 0;
 			
 			for( int k = 0; k < NUM_MOVIES; k++){
 				if(R(i,k) != -1){
-					RTest(i,k) = r(index);
+					rTest(i,k) = r(index);
 					index++;
 				}
 			}
-			cout << RTest.row(i) << endl << endl;
 		}
 		mSize = NUM_MOVIES;
 		qTemp = q;
 	}
 
+	return RMSECalc(rTest, R);
+}
+
+float RandomInitLearning(/* in */ const MatrixXf & p, //the user matrix
+				 		 /* out*/ const MatrixXf & q, //the movie matrix
+				 		 /* in */ const MatrixXf & R){
+	
+	
 }
 
 void RemoveRow(/* in */ MatrixXf & orig,
@@ -188,4 +218,19 @@ void RemoveRow(/* in */ MatrixXf & orig,
 		orig.conservativeResize(mSize - 1, NUM_FEATURES);
 
 
+}
+
+float RMSECalc(/* in */ const MatrixXf & rExpected,
+			   /* in */ const MatrixXf & rTest){
+	float sum = 0;
+	for(int i = 0; i < NUM_USERS; i++){
+		for(int j = 0; j < NUM_MOVIES; j++){
+			if(rTest(i,j) != -1){
+				float rE = rExpected(i,j);
+				float rT = rTest(i,j);
+				sum += (rE - rT) * (rE-rT);
+			}
+		}
+	}	
+	return (float)sqrt((float)sum/(float)TEST_SIZE);
 }
